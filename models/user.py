@@ -51,6 +51,8 @@ class User:
         }
         users_collection.insert_one(user_data)
 
+        return user_data
+
     @staticmethod
     def delete_by_id(user_id):
         _id = ObjectId(user_id)
