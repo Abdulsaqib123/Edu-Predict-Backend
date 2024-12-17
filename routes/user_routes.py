@@ -4,6 +4,7 @@ from models.user import User
 from models.role import Role
 from bson import ObjectId
 from models.db import db
+from flask_jwt_extended import jwt_required
 
 user_bp = Blueprint('users', __name__)
 
@@ -28,7 +29,7 @@ def create_user():
                 "_id": str(role_data["_id"]),
                 "name": role_data.get("name"),
             }
-        return jsonify({"message": "User created successfully.", "user": user}), 201
+        return jsonify({"message": "Account registered successfully.", "user": user}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -50,6 +51,7 @@ def delete_user(user_id):
         return jsonify({"error": str(e)}), 400
 
 @user_bp.route('/find/<string:user_id>', methods=['GET'])
+@jwt_required()
 def single_user(user_id):
     try:
         user_id = ObjectId(user_id)
@@ -58,10 +60,15 @@ def single_user(user_id):
 
     try:
         user = User.find_by_id(user_id)
-        # if not user:
-        #     return jsonify({"message": "User not found."}), 404
-        
         user["_id"] = str(user["_id"])
+        role_data = db.roles.find_one({"_id": ObjectId(user["role"])})
+        user["role"] = {
+                "_id": str(role_data["_id"]),
+                "name": role_data.get("name"),
+            }
+        if not user:
+            return jsonify({"message": "User not found."}), 404
+        
         return jsonify({"message": "User found successfully.", "user": user}), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

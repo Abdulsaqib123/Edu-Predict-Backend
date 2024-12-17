@@ -3,6 +3,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 import bcrypt
 from bson import ObjectId
 from models.db import db
+from datetime import timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -27,7 +28,7 @@ def login():
         if not role:
             return jsonify({"message": "Role not found for user"}), 404
 
-        token = create_access_token(identity=str(user["_id"]))
+        token = create_access_token(identity=str(user["_id"]), expires_delta=timedelta(days=1))
 
         user['role'] = str(user["role"])
         user['_id'] = str(user['_id'])
@@ -51,4 +52,4 @@ def login():
 def logout():
     jti = get_jwt()['jti'] 
     db.blacklist.insert_one({"jti": jti})
-    return jsonify({"msg": "Successfully logged out"}), 200
+    return jsonify({"message": "Successfully logged out"}), 200
