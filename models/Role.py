@@ -5,10 +5,9 @@ roles_collection = db['roles']
 
 class Role:
     def find(name=None):
-        if name:
-            return list(roles_collection.find({"name": name}, {"_id": 0}))
-        else:
-            return list(roles_collection.find({}, {"_id": 0}))
+        query = {"name": name} if name else {}
+        roles = roles_collection.find(query)
+        return [Role.serialize_role(role) for role in roles]
 
     @staticmethod
     def find_by_id(role_id):
@@ -34,3 +33,9 @@ class Role:
         result = roles_collection.delete_one({"_id": _id})
         if result.deleted_count == 0:
             raise ValueError(f"Role with ID '{role_id}' not found.")
+
+    @staticmethod
+    def serialize_role(role):
+        """Convert MongoDB document to a serializable dictionary."""
+        role["_id"] = str(role["_id"])
+        return role
