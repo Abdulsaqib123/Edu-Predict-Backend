@@ -8,10 +8,9 @@ roles_collection = db['roles']
 
 class User:
     def find(email=None):
-        if email:
-            return list(users_collection.find({"email": email}, {"_id": 0}))
-        else:
-            return list(users_collection.find({}, {"_id": 0}))
+        query = {"email": email} if email else {}
+        users = users_collection.find(query)
+        return [User.serialize_user(user) for user in users]
 
     @staticmethod
     def find_by_id(user_id):
@@ -59,3 +58,10 @@ class User:
         result = users_collection.delete_one({"_id": _id})
         if result.deleted_count == 0:
             raise ValueError(f"User with ID '{user_id}' not found.")
+
+    @staticmethod
+    def serialize_user(user):
+        """Convert MongoDB document to a serializable dictionary."""
+        user["_id"] = str(user["_id"])
+        user["role"] = str(user['role'])
+        return user
