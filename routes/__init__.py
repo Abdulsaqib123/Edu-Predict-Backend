@@ -3,6 +3,7 @@ from .user_routes import user_bp
 from .upload_routes import upload_bp
 from .summary_routes import summary_bp
 from .role_routes import role_bp
+from .dashboard_routes import dashboard_bp
 
 def register_routes(app):
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -10,3 +11,4 @@ def register_routes(app):
     app.register_blueprint(upload_bp, url_prefix='/uploads')
     app.register_blueprint(summary_bp, url_prefix='/summary')
     app.register_blueprint(role_bp, url_prefix='/roles')
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')

@@ -38,6 +38,29 @@ def create_user():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
+@user_bp.route('/edit/<string:user_id>', methods=['PUT'])
+def update_user(user_id):
+    try:
+        user_id = ObjectId(user_id) 
+    except Exception:
+        return jsonify({"message": "Invalid user ID."}), 400
+
+    data = request.json
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    email = data.get('email')
+    password = data.get('password')
+    role = data.get('role')
+
+    try:
+        user = User.update(user_id , first_name, last_name , email , password , role)
+        return jsonify({"message": "User updated successfully.", "user": user}), 201
+        # return jsonify({"message": "User updated successfully."}), 201
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @user_bp.route('/delete/<string:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
