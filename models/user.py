@@ -7,8 +7,12 @@ users_collection = db['users']
 roles_collection = db['roles']
 
 class User:
-    def find(email=None):
-        query = {"email": email} if email else {}
+    def find(email=None, role_id=None):
+        query = {}
+        if email:
+            query["email"] = email
+        if role_id:
+            query["role"] = role_id
         users = users_collection.find(query)
         return [User.serialize_user(user) for user in users]
 

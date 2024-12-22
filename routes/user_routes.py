@@ -10,7 +10,16 @@ user_bp = Blueprint('users', __name__)
 
 @user_bp.route('/index', methods=['GET'])
 def get_users():
-    users = User.find()
+    email = request.args.get('email')
+    role_id = request.args.get('role_id')
+
+    if role_id:
+            try:
+                role_id = ObjectId(role_id)
+            except Exception:
+                return jsonify({"message": "Invalid role ID"}), 400
+
+    users = User.find(email=email, role_id=role_id)
     return jsonify({"users": users}), 200
 
 @user_bp.route('/create', methods=['POST'])
@@ -34,7 +43,10 @@ def create_user():
                 "_id": str(role_data["_id"]),
                 "name": role_data.get("name"),
             }
-        return jsonify({"message": "Account registered successfully.", "user": user}), 201
+
+        role_name = role_data.get("name").capitalize() if role_data else "User"
+        success_message = f"{role_name} account registered successfully."
+        return jsonify({"message": success_message, "user": user}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -53,8 +65,13 @@ def update_user(user_id):
     role = data.get('role')
 
     try:
+
+        role_data = db.roles.find_one({"_id": ObjectId(role)})
+        role_name = role_data.get("name").capitalize() if role_data else "User"
+        message = f"{role_name} account updated successfully."
         user = User.update(user_id , first_name, last_name , email , password , role)
-        return jsonify({"message": "User updated successfully.", "user": user}), 201
+
+        return jsonify({"message": message, "user": user}), 201
         # return jsonify({"message": "User updated successfully."}), 201
 
     except ValueError as e:
@@ -64,19 +81,28 @@ def update_user(user_id):
 @user_bp.route('/delete/<string:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
-        user_id = ObjectId(user_id) 
+        user_id = ObjectId(user_id)
     except Exception:
-        return jsonify({"message": "Invalid user ID."}), 400
+        return jsonify({"error": "Invalid user ID."}), 400
 
     user = db.users.find_one({"_id": user_id})
     if not user:
-        return jsonify({"message": "User not found."}), 404
+        return jsonify({"error": "User not found."}), 404
 
     try:
+        role_id = user.get("role")
+        role = db.roles.find_one({"_id": ObjectId(role_id)}) if role_id else None
+        role_name = role.get("name", "User").lower() if role else "user"
+
         User.delete_by_id(user_id)
-        return jsonify({"message": "User deleted successfully."}), 200
+
+        message = f"{role_name.capitalize()} account deleted successfully."
+        return jsonify({"message": message}), 200
+
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 @user_bp.route('/find/<string:user_id>', methods=['GET'])
 @jwt_required()
