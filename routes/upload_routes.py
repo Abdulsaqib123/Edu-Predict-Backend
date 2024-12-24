@@ -9,33 +9,70 @@ upload_bp = Blueprint('uploads', __name__)
 @upload_bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_file():
-    current_user = get_jwt_identity()
-    if 'file' not in request.files:
-        return jsonify({"message": "No file uploaded"}), 400
-
-    file = request.files['file']
+    """
+    API endpoint for teachers to upload diverse educational datasets.
+    Supports academic records, student demographics, LMS data, and attendance records.
+    """
     try:
-        # Handle file based on type
+        current_teacher_id = get_jwt_identity()
+
+        if 'file' not in request.files:
+            return jsonify({"message": "No file uploaded"}), 400
+
+        file = request.files['file']
+
         if file.filename.endswith('.csv'):
             data = pd.read_csv(file)
         elif file.filename.endswith('.xlsx'):
             data = pd.read_excel(file)
-        elif file.filename.endswith('.json'):
-            data = pd.read_json(file)
         else:
-            return jsonify({"message": "Unsupported file format"}), 400
+            return jsonify({"message": "Unsupported file format. Only CSV and Excel files are allowed."}), 400
 
-        if not set(["student_id", "name", "attendance", "grade"]).issubset(data.columns):
-            return jsonify({"message": "Invalid file format. Missing required columns."}), 400
+        column_sets = {
+            "academic_records": {"student_id", "subject", "grade"},
+            "student_demographics": {"student_id", "name", "age", "gender"},
+            "lms_data": {"student_id", "module", "progress", "score"},
+            "attendance_records": {"student_id", "date", "attendance_status"}
+        }
+
+        dataset_type = None
+        for data_type, required_columns in column_sets.items():
+            if required_columns.issubset(data.columns):
+                dataset_type = data_type
+                break
+
+        if not dataset_type:
+            return jsonify({"message": "Invalid file format. Columns do not match any known dataset types."}), 400
+
+        records = data.to_dict(orient='records')
+        for record in records:
+            record["teacher_id"] = ObjectId(current_teacher_id)
+
+            # Convert student_id to ObjectId if it is a valid ID
+            if 'student_id' in record:
+                try:
+                    record["student_id"] = ObjectId(record["student_id"])
+                except Exception as e:
+                    return jsonify({"message": f"Invalid student_id format: {str(e)}"}), 400
 
         file_record = {
-            "user_id" : ObjectId(current_user),
+            "teacher_id": ObjectId(current_teacher_id),
+            "dataset_type": dataset_type,
             "filename": file.filename,
-            "data": data.to_dict(orient='records')
+            "data": records
         }
 
         db['educational_data'].insert_one(file_record)
-        return jsonify({"message": "File uploaded and data processed successfully"}), 200
+
+        return jsonify({
+            "message": f"File uploaded and {dataset_type} data processed successfully."
+        }), 200
+
+    except pd.errors.EmptyDataError:
+        return jsonify({"message": "The uploaded file is empty."}), 400
+
+    except KeyError as e:
+        return jsonify({"message": f"Missing required data: {str(e)}"}), 400
 
     except Exception as e:
         return jsonify({"message": f"Error processing file: {str(e)}"}), 500
