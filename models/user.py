@@ -14,6 +14,7 @@ class User:
         if role_id:
             query["role"] = role_id
         users = users_collection.find(query)
+        print("Role ID : ", role_id)
         return [User.serialize_user(user) for user in users]
 
     @staticmethod
@@ -105,4 +106,8 @@ class User:
         """Convert MongoDB document to a serializable dictionary."""
         user["_id"] = str(user["_id"])
         user["role"] = str(user['role'])
+        if "teacher_id" in user and user["teacher_id"] is not None:
+            user["teacher_id"] = str(user['teacher_id'])
+        else:
+            user["teacher_id"] = None
         return user

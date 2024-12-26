@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
 from models.db import db
+from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import pandas as pd
 
@@ -63,6 +64,21 @@ def upload_file():
         }
 
         db['educational_data'].insert_one(file_record)
+
+        student_ids = [record['student_id'] for record in records if 'student_id' in record]
+        notifications = []
+        for student_id in student_ids:
+            notifications.append({
+                "user_id": student_id,
+                "teacher_id": ObjectId(current_teacher_id),
+                "dataset_type": dataset_type,
+                "message": f"A new {dataset_type} file has been uploaded by your teacher.",
+                "read": False,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            })
+
+        db['notifications'].insert_many(notifications)
 
         return jsonify({
             "message": f"File uploaded and {dataset_type} data processed successfully."

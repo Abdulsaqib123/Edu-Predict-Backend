@@ -94,7 +94,7 @@ def send_student_email(recipient_email, student_name, email, password):
         sender_email = "personalwork270@gmail.com"
         sender_password = "pgzxiozsffnldutq"
 
-        subject = "Welcome to the Platform"
+        subject = "Welcome to the Edutics"
         body = f"""
         Hi {student_name},
 

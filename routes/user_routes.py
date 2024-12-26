@@ -120,6 +120,10 @@ def single_user(user_id):
                 "_id": str(role_data["_id"]),
                 "name": role_data.get("name"),
             }
+        if "teacher_id" in user and user["teacher_id"] is not None:
+            user["teacher_id"] = str(user['teacher_id'])
+        else:
+            user["teacher_id"] = None
         if not user:
             return jsonify({"message": "User not found."}), 404
         

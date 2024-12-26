@@ -36,6 +36,10 @@ def login():
             "_id": str(role["_id"]),
             "name": role.get("name"),
         }
+        if "teacher_id" in user and user["teacher_id"] is not None:
+            user["teacher_id"] = str(user['teacher_id'])
+        else:
+            user["teacher_id"] = None
 
         return jsonify({
                 "message": "Login successful!",
