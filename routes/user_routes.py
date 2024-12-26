@@ -5,6 +5,7 @@ from models.role import Role
 from bson import ObjectId
 from models.db import db
 from flask_jwt_extended import jwt_required
+from datetime import datetime
 
 user_bp = Blueprint('users', __name__)
 
@@ -131,3 +132,38 @@ def single_user(user_id):
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
+
+@user_bp.route('/update/profile/<string:student_id>', methods=['PUT'])
+@jwt_required()
+def update_student(student_id):
+    try:
+        student = db.users.find_one({"_id": ObjectId(student_id)})
+        if not student:
+            return jsonify({"error": "Student not found!"}), 404
+
+        data = request.json
+        first_name = data.get("first_name", student.get("first_name"))
+        last_name = data.get("last_name", student.get("last_name"))
+        email = data.get("email", student.get("email"))
+        age = data.get("age", student.get("age"))
+        gender = data.get("gender", student.get("gender"))
+        password = data.get("password", None)
+
+        update_data = {
+            "first_name": first_name.strip(),
+            "last_name": last_name.strip(),
+            "email": email.strip(),
+            "age": age.strip(),
+            "gender": gender.strip(),
+            "updated_at": datetime.utcnow(),
+        }
+
+        if password:
+            update_data["password"] = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+        db.users.update_one({"_id": ObjectId(student_id)}, {"$set": update_data})
+
+        return jsonify({"message": "Profile updated successfully."}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -54,11 +54,13 @@ def create_student():
         last_name = data.get("last_name")
         email = data.get("email")
         password = data.get("password")
+        age = data.get("age")
+        gender = data.get("gender")
         teacher_id = data.get("teacher_id")
         role = data.get("role")
 
-        if not all([first_name, last_name, email, password]):
-            return jsonify({"message": "All fields (first_name, last_name, email, password) are required."}), 400
+        if not all([first_name, last_name, email, password , age , gender]):
+            return jsonify({"error": "All fields (first_name, last_name, email, password , age , gender) are required."}), 400
 
         if users_collection.find_one({"email": email}):
             return jsonify({"error": f"User with email '{email}' already exists."}), 400
@@ -72,6 +74,8 @@ def create_student():
             "last_name": last_name.strip(),
             "email": email.strip(),
             "password": hashed_password.decode('utf-8'),
+            "age" : age.strip(),
+            "gender" : gender.strip(),
             "role": ObjectId(role),
             "teacher_id": ObjectId(current_user_id),
             "created_at": current_time,
@@ -139,12 +143,16 @@ def update_student(student_id):
         first_name = data.get("first_name", student.get("first_name"))
         last_name = data.get("last_name", student.get("last_name"))
         email = data.get("email", student.get("email"))
+        age = data.get("age", student.get("age"))
+        gender = data.get("gender", student.get("gender"))
         password = data.get("password", None)
 
         update_data = {
             "first_name": first_name.strip(),
             "last_name": last_name.strip(),
             "email": email.strip(),
+            "age": age.strip(),
+            "gender": gender.strip(),
             "updated_at": datetime.utcnow(),
         }
 
