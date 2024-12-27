@@ -12,6 +12,42 @@ students_bp = Blueprint('students', __name__)
 
 users_collection = db['users']
 
+def convert_objectid_to_str(data):
+    if isinstance(data, list):
+        return [convert_objectid_to_str(item) for item in data]
+    elif isinstance(data, dict):
+        return {key: convert_objectid_to_str(value) for key, value in data.items()}
+    elif isinstance(data, ObjectId):
+        return str(data)
+    return data
+
+@students_bp.route('/stats', methods=['GET'])
+@jwt_required()
+def dashboard_stats():
+    try:
+        current_user_id = get_jwt_identity()
+
+        current_user_id = ObjectId(current_user_id)
+
+        educational_data_cursor = db['educational_data'].find({
+            "data.student_id": current_user_id
+        }, {
+            "data": {
+                "$elemMatch": {"student_id": current_user_id}
+            }
+        })
+
+        educational_data_list1 = list(educational_data_cursor)
+
+        educational_data_list = convert_objectid_to_str(educational_data_list1)
+
+        return jsonify({
+            "educational_data": educational_data_list
+        })
+
+    except Exception as e:
+        return jsonify({"error": f"Error retrieving stats: {str(e)}"}), 500
+
 @students_bp.route('/index', methods=['GET'])
 @jwt_required()
 def get_students_by_teacher():

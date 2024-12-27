@@ -10,7 +10,6 @@ teacher_bp = Blueprint('teacher', __name__)
 def dashboard_stats():
     try:
         current_user_id = get_jwt_identity()
-        print(current_user_id)
         total_students = db["users"].count_documents({"role" : ObjectId("67587c8e74cea1767a2e0583") , "teacher_id": ObjectId(current_user_id)})
 
         return jsonify({"students" : total_students}), 200
