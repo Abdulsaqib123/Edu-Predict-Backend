@@ -122,7 +122,12 @@ def single_user(user_id):
                 "name": role_data.get("name"),
             }
         if "teacher_id" in user and user["teacher_id"] is not None:
+            teacher_data = db.users.find_one({"_id" : ObjectId(user["teacher_id"])})
             user["teacher_id"] = str(user['teacher_id'])
+            user["teacher"] = {
+                "username" : teacher_data.get("first_name") + " " + teacher_data.get("last_name"),
+                "email" : teacher_data.get("email")
+            }
         else:
             user["teacher_id"] = None
         if not user:

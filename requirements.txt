@@ -4,3 +4,6 @@ flask-jwt-extended
 pymongo
 bcrypt
 pandas
+dask
+dask[dataframe]
+scipy

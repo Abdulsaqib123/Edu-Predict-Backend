@@ -99,7 +99,7 @@ def create_student():
             return jsonify({"error": "All fields (first_name, last_name, email, password , age , gender) are required."}), 400
 
         if users_collection.find_one({"email": email}):
-            return jsonify({"error": f"User with email '{email}' already exists."}), 400
+            return jsonify({"error": f"Student with email '{email}' already exists."}), 400
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
