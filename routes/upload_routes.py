@@ -5,6 +5,12 @@ from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
+import os
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = './uploads'
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 upload_bp = Blueprint('uploads', __name__)
 
@@ -99,6 +105,10 @@ def upload_file():
                     record["student_id"] = ObjectId(record["student_id"])
                 except Exception as e:
                     return jsonify({"message": f"Invalid student_id format: {str(e)}"}), 400
+
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
 
         db['educational_data'].insert_one({
             "teacher_id": ObjectId(current_teacher_id),
