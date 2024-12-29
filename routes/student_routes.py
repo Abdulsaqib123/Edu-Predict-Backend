@@ -29,13 +29,37 @@ def dashboard_stats():
 
         current_user_id = ObjectId(current_user_id)
 
-        educational_data_cursor = db['educational_data'].find({
-            "data.student_id": current_user_id
-        }, {
-            "data": {
-                "$elemMatch": {"student_id": current_user_id}
+        # educational_data_cursor = db['educational_data'].find({
+        #     "data.student_id": current_user_id
+        # }, {
+        #     "data": {
+        #         "$elemMatch": {"student_id": current_user_id}
+        #     }
+        # })
+
+        educational_data_cursor = db['educational_data'].aggregate([
+            {
+                "$match": {
+                    "data.student_id": current_user_id
+                }
+            },
+            {
+                "$project": {
+                    "_id": 1,
+                    "teacher_id": 1,
+                    "dataset_type": 1,
+                    "filename": 1,
+                    "uploaded_at": 1,
+                    "data": {
+                        "$filter": {
+                            "input": "$data",
+                            "as": "item",
+                            "cond": { "$eq": ["$$item.student_id", current_user_id] }
+                        }
+                    }
+                }
             }
-        })
+        ])
 
         educational_data_list1 = list(educational_data_cursor)
 
