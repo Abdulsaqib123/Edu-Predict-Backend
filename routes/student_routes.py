@@ -253,6 +253,35 @@ def get_student_details(student_id):
         teacher = users_collection.find_one({"_id": ObjectId(current_user_id)})
 
         student = users_collection.find_one({"_id": ObjectId(student_id), "teacher_id": ObjectId(current_user_id)})
+
+        educational_data_cursor = db['educational_data'].aggregate([
+            {
+                "$match": {
+                    "data.student_id": ObjectId(str(student['_id']))
+                }
+            },
+            {
+                "$project": {
+                    "_id": 1,
+                    "teacher_id": 1,
+                    "dataset_type": 1,
+                    "filename": 1,
+                    "uploaded_at": 1,
+                    "data": {
+                        "$filter": {
+                            "input": "$data",
+                            "as": "item",
+                            "cond": { "$eq": ["$$item.student_id", ObjectId(str(student['_id']))] }
+                        }
+                    }
+                }
+            }
+        ])
+
+        educational_data_list1 = list(educational_data_cursor)
+
+        educational_data_list = convert_objectid_to_str(educational_data_list1)
+
         if not student:
             return jsonify({"error": "Student not found or not associated with the current teacher."}), 404
 
@@ -260,7 +289,7 @@ def get_student_details(student_id):
         student["teacher_id"] = str(student["teacher_id"])
         student["role"] = str(student["role"])
 
-        return jsonify({"message": "Student details fetched successfully.", "student": student}), 200
+        return jsonify({"message": "Student details fetched successfully.", "student": student , "educational_data_list" : educational_data_list}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

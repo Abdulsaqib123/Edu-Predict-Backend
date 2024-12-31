@@ -120,6 +120,7 @@ def upload_file():
 
         student_ids = [record['student_id']]
         notifications = []
+        reports = []
         for student_id in student_ids:
             notifications.append({
                 "user_id": student_id,
@@ -131,7 +132,17 @@ def upload_file():
                 "updated_at": datetime.utcnow(),
             })
 
+            reports.append({
+                "user_id": student_id,
+                "teacher_id": ObjectId(current_teacher_id),
+                "file_name" : filename,
+                "file_path" : file_path,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            })
+
         db['notifications'].insert_many(notifications)
+        db['reports'].insert_many(reports)
 
         return jsonify({
             "message": f"{dataset_type.capitalize()} file uploaded and processed successfully."

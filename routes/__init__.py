@@ -7,6 +7,7 @@ from .dashboard_routes import dashboard_bp
 from .student_routes import students_bp
 from .teacher_routes import teacher_bp
 from .notification_routes import notifications_bp
+from .report_routes import reports_bp
 
 def register_routes(app):
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -18,3 +19,4 @@ def register_routes(app):
     app.register_blueprint(students_bp, url_prefix='/students')
     app.register_blueprint(teacher_bp, url_prefix='/teacher')
     app.register_blueprint(notifications_bp, url_prefix='/notifications')
+    app.register_blueprint(reports_bp, url_prefix='/reports')

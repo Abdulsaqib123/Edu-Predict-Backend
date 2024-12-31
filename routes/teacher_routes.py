@@ -10,9 +10,10 @@ teacher_bp = Blueprint('teacher', __name__)
 def dashboard_stats():
     try:
         current_user_id = get_jwt_identity()
-        total_students = db["users"].count_documents({"role" : ObjectId("67587c8e74cea1767a2e0583") , "teacher_id": ObjectId(current_user_id)})
+        total_students = db["users"].count_documents({"role": ObjectId("67587c8e74cea1767a2e0583"), "teacher_id": ObjectId(current_user_id)})
+        total_educational_files = db['educational_data'].count_documents({"teacher_id": ObjectId(current_user_id)})
 
-        return jsonify({"students" : total_students}), 200
+        return jsonify({"students": total_students , "educational_files" : total_educational_files}), 200
 
     except Exception as e:
         return jsonify({"message": f"Error fetching summary: {str(e)}"}), 500
