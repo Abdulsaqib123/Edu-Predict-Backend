@@ -83,11 +83,9 @@ def upload_file():
         else:
             return jsonify({"message": "Unsupported file format. Only CSV and Excel files are allowed."}), 400
 
+        # Updated column sets for handling the CSV file format
         column_sets = {
-            "academic_records": {"student_id", "subject", "grade"},
-            "student_demographics": {"student_id", "name", "age", "gender"},
-            "lms_data": {"student_id", "module", "progress", "score"},
-            "attendance_records": {"student_id", "date", "attendance_status"}
+            "academic_records": {"student_id", "first_name", "last_name", "email", "age", "gender", "module", "attendance_status", "teacher_id", "created_at", "updated_at", "grade", "progress", "score", "date", "english", "urdu", "math", "science", "social_studies", "computer", "literature"},
         }
 
         dataset_type = identify_dataset_type(data, column_sets)
@@ -118,9 +116,10 @@ def upload_file():
             "uploaded_at": datetime.utcnow()
         })
 
-        student_ids = [record['student_id']]
+        student_ids = set(record['student_id'] for record in records)  # Collect all unique student IDs
         notifications = []
         reports = []
+
         for student_id in student_ids:
             notifications.append({
                 "user_id": student_id,
@@ -135,8 +134,8 @@ def upload_file():
             reports.append({
                 "user_id": student_id,
                 "teacher_id": ObjectId(current_teacher_id),
-                "file_name" : filename,
-                "file_path" : file_path,
+                "file_name": filename,
+                "file_path": file_path,
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),
             })
