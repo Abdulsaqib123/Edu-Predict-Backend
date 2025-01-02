@@ -7,3 +7,4 @@ pandas
 dask
 dask[dataframe]
 scipy
+joblib
