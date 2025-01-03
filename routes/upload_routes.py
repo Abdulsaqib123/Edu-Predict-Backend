@@ -7,10 +7,33 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 import os
 from werkzeug.utils import secure_filename
+import joblib
 
 UPLOAD_FOLDER = './uploads'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, '..', 'uploads')
+MODEL_PATH = os.path.join(BASE_DIR, '..', 'models', 'kmeans_model_attributes.joblib')  # Update to joblib model
+
+def load_model():
+    """
+    Load the pre-trained model from the given path using joblib.
+    """
+    model_filename = MODEL_PATH  # Path to the saved model file
+    if not os.path.exists(model_filename):
+        raise FileNotFoundError(f"Model file not found: {model_filename}")
+
+    # Load the model using joblib
+    model = joblib.load(model_filename)
+
+    # Ensure the model has the 'predict' method
+    if not hasattr(model, 'predict'):
+        raise ValueError("Loaded object does not have a 'predict' method")
+    
+    return model
+
 
 upload_bp = Blueprint('uploads', __name__)
 
@@ -155,3 +178,44 @@ def upload_file():
 
     except Exception as e:
         return jsonify({"message": f"Error processing file: {str(e)}"}), 500
+
+
+@upload_bp.route('/predict/filepath', methods=['POST'])
+def predict_from_filepath():
+    try:
+        # Load the trained model
+        model = load_model()
+        print("Ok")
+
+        # Get file path from request body
+        data = request.get_json()
+        file_path = data.get("file_path")
+
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({"message": "Invalid or missing file path"}), 400
+
+        # Load data from the provided file path
+        if file_path.endswith('.csv'):
+            data = pd.read_csv(file_path)
+        elif file_path.endswith('.xlsx'):
+            data = pd.read_excel(file_path)
+        else:
+            return jsonify({"message": "Unsupported file format. Only CSV and Excel files are allowed."}), 400
+
+        # Optional: Process data if necessary
+        processed_data = process_data(data, "academic_records")
+
+        # Prepare data for prediction (numeric data only)
+        features = processed_data.select_dtypes(include=['number']).fillna(0)
+
+        # Make predictions
+        predictions = model.transform(features)
+
+        # Add predictions to the results dataframe
+        results = processed_data.copy()
+        results['prediction'] = predictions.tolist()
+
+        return jsonify({"predictions": results.to_dict(orient='records')}), 200
+
+    except Exception as e:
+        return jsonify({"message": f"Error during prediction: {str(e)}"}), 5000
