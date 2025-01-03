@@ -7,30 +7,30 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 import os
 from werkzeug.utils import secure_filename
-import joblib
+import pickle
 
 UPLOAD_FOLDER = './uploads'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, '..', 'uploads')
-MODEL_PATH = os.path.join(BASE_DIR, '..', 'models', 'kmeans_model_attributes.joblib')  # Update to joblib model
+MODEL_PATH = os.path.join(BASE_DIR, '..', 'models', 'kmeans_model_attributes.pkl')  # Update to pickle model
 
 def load_model():
     """
-    Load the pre-trained model from the given path using joblib.
+    Load the pre-trained model from the given path using pickle.
     """
     model_filename = MODEL_PATH  # Path to the saved model file
     if not os.path.exists(model_filename):
         raise FileNotFoundError(f"Model file not found: {model_filename}")
 
-    # Load the model using joblib
-    model = joblib.load(model_filename)
+    # Load the model using pickle
+    with open(model_filename, 'rb') as file:
+        model = pickle.load(file)
 
-    # Ensure the model has the 'predict' method
-    if not hasattr(model, 'predict'):
-        raise ValueError("Loaded object does not have a 'predict' method")
+    # Ensure the model has the 'predict' method (or 'transform' if you're using clustering)
+    # if not hasattr(model, 'predict') and not hasattr(model, 'transform'):
+    #     raise ValueError("Loaded object does not have a 'predict' or 'transform' method")
     
     return model
 
@@ -185,11 +185,11 @@ def predict_from_filepath():
     try:
         # Load the trained model
         model = load_model()
-        print("Ok")
 
         # Get file path from request body
         data = request.get_json()
-        file_path = data.get("file_path")
+        # file_path = data.get("file_path")
+        file_path = "uploads/student_data (1).csv"
 
         if not file_path or not os.path.exists(file_path):
             return jsonify({"message": "Invalid or missing file path"}), 400
@@ -209,7 +209,8 @@ def predict_from_filepath():
         features = processed_data.select_dtypes(include=['number']).fillna(0)
 
         # Make predictions
-        predictions = model.transform(features)
+        predictions = model.transform(features)  # Use transform if the model is a clustering model
+        # OR if the model is a classifier/regressor, use model.predict(features)
 
         # Add predictions to the results dataframe
         results = processed_data.copy()
@@ -218,4 +219,4 @@ def predict_from_filepath():
         return jsonify({"predictions": results.to_dict(orient='records')}), 200
 
     except Exception as e:
-        return jsonify({"message": f"Error during prediction: {str(e)}"}), 5000
+        return jsonify({"message": f"Error during prediction: {str(e)}"}), 500
