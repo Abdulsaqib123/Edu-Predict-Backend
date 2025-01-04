@@ -146,7 +146,7 @@ def create_student():
 
         send_student_email(email, first_name + " " + last_name, email, password)
 
-        return jsonify({"message": "Student created successfully."}), 201
+        return jsonify({"message": "Student created and successfully email send."}), 201
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
