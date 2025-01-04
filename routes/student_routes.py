@@ -193,9 +193,13 @@ def send_student_email(recipient_email, student_name, email, password):
 def update_student(student_id):
     try:
         current_user_id = get_jwt_identity()
-        teacher = users_collection.find_one({"_id": ObjectId(current_user_id)})
 
-        student = users_collection.find_one({"_id": ObjectId(student_id), "teacher_id": ObjectId(current_user_id)})
+        data = request.get_json()
+        teacher_id = data.get("teacher_id") or current_user_id
+
+        teacher = users_collection.find_one({"_id": ObjectId(teacher_id)})
+
+        student = users_collection.find_one({"_id": ObjectId(student_id), "teacher_id": ObjectId(teacher_id)})
         if not student:
             return jsonify({"error": "Student not found or not associated with the current teacher."}), 404
 
